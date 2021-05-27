@@ -1,33 +1,40 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.ObjectModel;
 
+using Valve.VR.InteractionSystem;
 public class ballanimation : MonoBehaviour
 {
-    private Vector3 gravity = new Vector3(0, 0.02f, 0);
+   // private Vector3 gravity = new Vector3(0, 0.02f, 0);
     public GameObject micVolume;
     private float moveSpeed;
-    private byte balloons = 3;
+    private Hand hand;
 
     void Start()
     {
-        
+        hand = GetComponent<Hand>();
+       
     }
 
     
     void FixedUpdate()
 
     {
-        /* Move Cow upwards based on Mic volume */
+        
+
+        /* Move ball based on Mic volume */
 
         moveSpeed = micVolume.GetComponent<MicrophoneInput>().loudness * 0.2f;
-        transform.position = new Vector3(0, transform.position.y + moveSpeed, 0);
+        transform.position = new Vector3(transform.position.x + moveSpeed, transform.position.y, transform.position.z);
 
         /* Simulate our own gravity (this one doesn't get stronger when high) */
 
-        transform.position -= gravity;
-        Debug.Log("Okk");
+       // transform.position -= gravity;
+      
 
+        //on fire
+       
     }      
 }
 
