@@ -14,9 +14,11 @@ public class blowActivation : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (transform.position.y > -1.10 )
+        if (transform.position.y > -1.10)
         {
             animation.enabled = true;
         }
+        else
+            animation.enabled = false;
     }
 }

@@ -12,12 +12,11 @@ public class CollisionWithFire : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        if (collision.collider.tag == "bois" || collision.collider.tag == "sol")
+        if (collision.collider.tag == "box")
         {
             blowEffect.enabled = false;
+            
         }
-        else
-            blowEffect.enabled = true;
     }
 }
 

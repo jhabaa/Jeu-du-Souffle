@@ -9,6 +9,6 @@ EditorBuildSettings:
     path: Assets/menu.unity
     guid: 1f9b1f8a4a9ee7f419a0d0fcc0d0c4e9
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
+    path: Assets/Scenes/Scene Souffle.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   m_configObjects: {}

@@ -9,6 +9,9 @@ TagManager:
   - bois
   - box
   - sol
+  - yellow
+  - blue
+  - red
   layers:
   - Default
   - TransparentFX
