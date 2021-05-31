@@ -1,11 +1,6 @@
-﻿//========= Copyright 2016-2021, HTC Corporation. All rights reserved. ===========
-
-#pragma warning disable 0649
-using HTC.UnityPlugin.LiteCoroutineSystem;
-using HTC.UnityPlugin.Utility;
+﻿using HTC.UnityPlugin.Utility;
 using HTC.UnityPlugin.Vive;
 using System;
-using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -13,7 +8,7 @@ using UnityEngine.Serialization;
 using GrabberPool = HTC.UnityPlugin.Utility.ObjectPool<Draggable.Grabber>;
 
 // demonstrate of dragging things useing built in EventSystem handlers
-public class Draggable : GrabbableBase<PointerEventData, Draggable.Grabber>
+public class Draggable : GrabbableBase<Draggable.Grabber>
     , IInitializePotentialDragHandler
     , IBeginDragHandler
     , IDragHandler
@@ -22,10 +17,9 @@ public class Draggable : GrabbableBase<PointerEventData, Draggable.Grabber>
     [Serializable]
     public class UnityEventDraggable : UnityEvent<Draggable> { }
 
-    public class Grabber : GrabberBase<PointerEventData>
+    public class Grabber : IGrabber
     {
         private static GrabberPool m_pool;
-        private PointerEventData m_eventData;
 
         public static Grabber Get(PointerEventData eventData)
         {
@@ -35,19 +29,19 @@ public class Draggable : GrabbableBase<PointerEventData, Draggable.Grabber>
             }
 
             var grabber = m_pool.Get();
-            grabber.m_eventData = eventData;
+            grabber.eventData = eventData;
             return grabber;
         }
 
         public static void Release(Grabber grabber)
         {
-            grabber.m_eventData = null;
+            grabber.eventData = null;
             m_pool.Release(grabber);
         }
 
-        public override PointerEventData eventData { get { return m_eventData; } }
+        public PointerEventData eventData { get; private set; }
 
-        public override RigidPose grabberOrigin
+        public RigidPose grabberOrigin
         {
             get
             {
@@ -57,7 +51,7 @@ public class Draggable : GrabbableBase<PointerEventData, Draggable.Grabber>
             }
         }
 
-        public override RigidPose grabOffset { get { return grabber2hit * hit2pivot; } set { hit2pivot = grabber2hit.GetInverse() * value; } }
+        public RigidPose grabOffset { get { return grabber2hit * hit2pivot; } set { } }
 
         public RigidPose grabber2hit { get; set; }
 
@@ -75,8 +69,7 @@ public class Draggable : GrabbableBase<PointerEventData, Draggable.Grabber>
         }
     }
 
-    private LiteCoroutine m_updateCoroutine;
-    private LiteCoroutine m_physicsCoroutine;
+    private IndexedTable<PointerEventData, Grabber> m_eventGrabberSet;
 
     [FormerlySerializedAs("initGrabDistance")]
     [SerializeField]
@@ -91,9 +84,6 @@ public class Draggable : GrabbableBase<PointerEventData, Draggable.Grabber>
     [FormerlySerializedAs("unblockableGrab")]
     [SerializeField]
     private bool m_unblockableGrab = true;
-    [SerializeField]
-    [FormerlySerializedAs("m_scrollDelta")]
-    private float m_scrollingSpeed = 0.01f;
     [FormerlySerializedAs("afterGrabbed")]
     [SerializeField]
     private UnityEventDraggable m_afterGrabbed = new UnityEventDraggable();
@@ -103,6 +93,9 @@ public class Draggable : GrabbableBase<PointerEventData, Draggable.Grabber>
     [FormerlySerializedAs("onDrop")]
     [SerializeField]
     private UnityEventDraggable m_onDrop = new UnityEventDraggable(); // change rigidbody drop velocity here
+    [SerializeField]
+    [FormerlySerializedAs("m_scrollDelta")]
+    private float m_scrollingSpeed = 0.01f;
 
     public bool isDragged { get { return isGrabbed; } }
 
@@ -138,34 +131,22 @@ public class Draggable : GrabbableBase<PointerEventData, Draggable.Grabber>
         onGrabberDrop += () => m_onDrop.Invoke(this);
     }
 
-    protected virtual void OnDisable() { ForceRelease(); }
-
-    protected override Grabber CreateGrabber(PointerEventData eventData)
+    protected virtual void OnDisable()
     {
-        var hitResult = eventData.pointerPressRaycast;
-        float distance;
-        switch (eventData.button)
-        {
-            case PointerEventData.InputButton.Middle:
-            case PointerEventData.InputButton.Right:
-                distance = Mathf.Min(hitResult.distance, initGrabDistance);
-                break;
-            case PointerEventData.InputButton.Left:
-                distance = hitResult.distance;
-                break;
-            default:
-                return null;
-        }
-
-        var grabber = Grabber.Get(eventData);
-        grabber.grabber2hit = new RigidPose(new Vector3(0f, 0f, distance), Quaternion.identity);
-        grabber.hit2pivot = RigidPose.FromToPose(new RigidPose(hitResult.worldPosition, hitResult.module.eventCamera.transform.rotation), new RigidPose(transform));
-        return grabber;
+        ClearGrabbers(true);
+        ClearEventGrabberSet();
     }
 
-    protected override void DestoryGrabber(Grabber grabber)
+    private void ClearEventGrabberSet()
     {
-        Grabber.Release(grabber);
+        if (m_eventGrabberSet == null) { return; }
+
+        for (int i = m_eventGrabberSet.Count - 1; i >= 0; --i)
+        {
+            Grabber.Release(m_eventGrabberSet.GetValueByIndex(i));
+        }
+
+        m_eventGrabberSet.Clear();
     }
 
     public virtual void OnInitializePotentialDrag(PointerEventData eventData)
@@ -175,54 +156,53 @@ public class Draggable : GrabbableBase<PointerEventData, Draggable.Grabber>
 
     public virtual void OnBeginDrag(PointerEventData eventData)
     {
-        if (AddGrabber(eventData))
-        {
-            if (m_updateCoroutine.IsNullOrDone())
-            {
-                LiteCoroutine.StartCoroutine(ref m_updateCoroutine, DragUpdate(), false);
+        var hitDistance = 0f;
 
-                if (moveByVelocity)
-                {
-                    LiteCoroutine.StartCoroutine(ref m_physicsCoroutine, PhysicsGrabUpdate(), false);
-                }
-            }
+        switch (eventData.button)
+        {
+            case PointerEventData.InputButton.Middle:
+            case PointerEventData.InputButton.Right:
+                hitDistance = Mathf.Min(eventData.pointerPressRaycast.distance, m_initGrabDistance);
+                break;
+            case PointerEventData.InputButton.Left:
+                hitDistance = eventData.pointerPressRaycast.distance;
+                break;
+            default:
+                return;
         }
+
+        var grabber = Grabber.Get(eventData);
+        grabber.grabber2hit = new RigidPose(new Vector3(0f, 0f, hitDistance), Quaternion.identity);
+        grabber.hit2pivot = RigidPose.FromToPose(grabber.grabberOrigin * grabber.grabber2hit, new RigidPose(transform));
+
+        if (m_eventGrabberSet == null) { m_eventGrabberSet = new IndexedTable<PointerEventData, Grabber>(); }
+        m_eventGrabberSet.Add(eventData, grabber);
+
+        AddGrabber(grabber);
     }
 
-    private IEnumerator PhysicsGrabUpdate()
+    protected virtual void FixedUpdate()
     {
-        yield return new WaitForFixedUpdate();
-
-        while (isGrabbed)
+        if (isGrabbed && moveByVelocity)
         {
             OnGrabRigidbody();
-
-            yield return new WaitForFixedUpdate();
         }
-
-        yield break;
     }
 
-    private IEnumerator DragUpdate()
+    protected virtual void Update()
     {
-        yield return null;
+        if (!isGrabbed) { return; }
 
-        while (isGrabbed)
+        if (!moveByVelocity)
         {
-            var grabber = currentGrabber;
-            var scrollDelta = grabber.eventData.scrollDelta * m_scrollingSpeed;
-            if (scrollDelta != Vector2.zero)
-            {
-                grabber.hitDistance = Mathf.Max(0f, grabber.hitDistance + scrollDelta.y);
-            }
+            RecordLatestPosesForDrop(Time.time, 0.05f);
+            OnGrabTransform();
+        }
 
-            if (!moveByVelocity)
-            {
-                RecordLatestPosesForDrop(Time.time, 0.05f);
-                OnGrabTransform();
-            }
-
-            yield return null;
+        var scrollDelta = currentGrabber.eventData.scrollDelta * m_scrollingSpeed;
+        if (scrollDelta != Vector2.zero)
+        {
+            currentGrabber.hitDistance = Mathf.Max(0f, currentGrabber.hitDistance + scrollDelta.y);
         }
     }
 
@@ -230,6 +210,13 @@ public class Draggable : GrabbableBase<PointerEventData, Draggable.Grabber>
 
     public virtual void OnEndDrag(PointerEventData eventData)
     {
-        RemoveGrabber(eventData);
+        if (m_eventGrabberSet == null) { return; }
+
+        Grabber grabber;
+        if (!m_eventGrabberSet.TryGetValue(eventData, out grabber)) { return; }
+
+        RemoveGrabber(grabber);
+        m_eventGrabberSet.Remove(eventData);
+        Grabber.Release(grabber);
     }
 }

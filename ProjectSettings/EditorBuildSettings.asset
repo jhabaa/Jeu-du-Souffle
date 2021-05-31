@@ -11,4 +11,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Scene Souffle.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
-  m_configObjects: {}
+  m_configObjects:
+    Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 9c6e0c400f4c342468f781afb24a8bd5,
+      type: 2}
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: e43781ac9ade545419c8625961325aa7,
+      type: 2}

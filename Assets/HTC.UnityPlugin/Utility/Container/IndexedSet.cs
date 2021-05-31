@@ -1,4 +1,4 @@
-﻿//========= Copyright 2016-2021, HTC Corporation. All rights reserved. ===========
+﻿//========= Copyright 2016-2020, HTC Corporation. All rights reserved. ===========
 
 using System;
 using System.Collections;
@@ -152,12 +152,11 @@ namespace HTC.UnityPlugin.Utility
             }
         }
 
-        public int RemoveAll(Predicate<T> match)
+        public void RemoveAll(Predicate<T> match)
         {
-            var count = m_List.Count;
             var removed = 0;
 
-            for (int i = 0, imax = count; i < imax; ++i)
+            for (int i = 0, imax = m_List.Count; i < imax; ++i)
             {
                 if (match(m_List[i]))
                 {
@@ -174,22 +173,10 @@ namespace HTC.UnityPlugin.Utility
                 }
             }
 
-            if (removed > 0)
+            for (; removed > 0; --removed)
             {
-                if (removed == count)
-                {
-                    Clear();
-                }
-                else
-                {
-                    for (var i = removed; i > 0; --i)
-                    {
-                        m_List.RemoveAt(m_List.Count - 1);
-                    }
-                }
+                m_List.RemoveAt(m_List.Count - 1);
             }
-
-            return removed;
         }
 
         public void Sort(Comparison<T> sortLayoutFunction)

@@ -1,4 +1,4 @@
-﻿//========= Copyright 2016-2021, HTC Corporation. All rights reserved. ===========
+﻿//========= Copyright 2016-2020, HTC Corporation. All rights reserved. ===========
 
 using HTC.UnityPlugin.Utility;
 using UnityEngine;
@@ -15,11 +15,22 @@ namespace HTC.UnityPlugin.PoseTracker
         public bool freezeRotationY = false;
         public bool freezeRotationZ = true;
 
-        public override void ModifyPose(ref RigidPose pose, bool useLocal)
+        public override void ModifyPose(ref RigidPose pose, Transform origin)
         {
+            Vector3 freezePos;
+            Vector3 freezeEuler;
+
             if (freezePositionX || freezePositionY || freezePositionZ)
             {
-                var freezePos = useLocal ? transform.localPosition : transform.position;
+                if (origin != null && origin != transform.parent)
+                {
+                    freezePos = origin.InverseTransformPoint(transform.position);
+                }
+                else
+                {
+                    freezePos = transform.localPosition;
+                }
+
                 if (freezePositionX) { pose.pos.x = freezePos.x; }
                 if (freezePositionY) { pose.pos.y = freezePos.y; }
                 if (freezePositionZ) { pose.pos.z = freezePos.z; }
@@ -27,7 +38,15 @@ namespace HTC.UnityPlugin.PoseTracker
 
             if (freezeRotationX || freezeRotationY || freezeRotationZ)
             {
-                var freezeEuler = useLocal ? transform.localEulerAngles : transform.eulerAngles;
+                if (origin != null && origin != transform.parent)
+                {
+                    freezeEuler = (Quaternion.Inverse(origin.rotation) * transform.rotation).eulerAngles;
+                }
+                else
+                {
+                    freezeEuler = transform.localEulerAngles;
+                }
+
                 var poseEuler = pose.rot.eulerAngles;
                 if (freezeRotationX) { poseEuler.x = freezeEuler.x; }
                 if (freezeRotationY) { poseEuler.y = freezeEuler.y; }

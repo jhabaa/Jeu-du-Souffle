@@ -8,7 +8,7 @@ public class ballanimation : MonoBehaviour
 {
    // private Vector3 gravity = new Vector3(0, 0.02f, 0);
     public GameObject micVolume;
-    private float moveSpeed;
+    private float moveSpeed = 0.02f;
     private Transform cam;
     private Vector3 gravity = new Vector3(0, 0.02f, 0);
 
@@ -23,7 +23,7 @@ public class ballanimation : MonoBehaviour
     {
         if (this.tag =="yellow")
         {
-            moveSpeed = micVolume.GetComponent<MicrophoneInput>().loudness * 0.2f;
+            moveSpeed = micVolume.GetComponent<MicrophoneInput>().loudness * 0.01f;
             transform.position = new Vector3(transform.position.x, transform.position.y + moveSpeed, transform.position.z);
             //transform.position -= gravity;
         }

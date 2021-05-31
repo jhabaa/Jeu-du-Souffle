@@ -1,4 +1,4 @@
-﻿//========= Copyright 2016-2021, HTC Corporation. All rights reserved. ===========
+﻿//========= Copyright 2016-2020, HTC Corporation. All rights reserved. ===========
 
 using System;
 using System.Collections;
@@ -248,12 +248,11 @@ namespace HTC.UnityPlugin.Utility
             return Remove(item.Key);
         }
 
-        public int RemoveAll(Predicate<KeyValuePair<TKey, TValue>> match)
+        public void RemoveAll(Predicate<KeyValuePair<TKey, TValue>> match)
         {
-            var count = m_Dictionary.Count;
             var removed = 0;
 
-            for (int i = 0, imax = count; i < imax; ++i)
+            for (int i = 0, imax = m_Dictionary.Count; i < imax; ++i)
             {
                 if (match(GetKeyValuePairByIndex(i)))
                 {
@@ -271,23 +270,22 @@ namespace HTC.UnityPlugin.Utility
                 }
             }
 
-            if (removed > 0)
+            if (removed == 0)
             {
-                if (removed == count)
+                return;
+            }
+            else if (removed == Count)
+            {
+                Clear();
+            }
+            else
+            {
+                for (; removed > 0; --removed)
                 {
-                    Clear();
-                }
-                else
-                {
-                    for (int i = removed; i > 0; --i)
-                    {
-                        m_KeyList.RemoveAt(m_KeyList.Count - 1);
-                        m_ValueList.RemoveAt(m_ValueList.Count - 1);
-                    }
+                    m_KeyList.RemoveAt(m_KeyList.Count - 1);
+                    m_ValueList.RemoveAt(m_ValueList.Count - 1);
                 }
             }
-
-            return removed;
         }
 
         private class Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>
