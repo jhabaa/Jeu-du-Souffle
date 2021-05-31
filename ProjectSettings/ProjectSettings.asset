@@ -662,10 +662,10 @@ PlayerSettings:
     m_VersionCode: 1
     m_VersionName: 
   apiCompatibilityLevel: 6
-  cloudProjectId: abff0539-457e-48cb-925b-331804cd4edd
+  cloudProjectId: 
   framebufferDepthMemorylessMode: 0
-  projectName: Jeu du Souffle
-  organizationId: jhabaa
+  projectName: 
+  organizationId: 
   cloudEnabled: 0
   enableNativePlatformBackendsForNewInputSystem: 0
   disableOldInputManagerSupport: 0

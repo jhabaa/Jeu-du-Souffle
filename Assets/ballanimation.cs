@@ -23,13 +23,13 @@ public class ballanimation : MonoBehaviour
     {
         if (this.tag =="yellow")
         {
-            moveSpeed = micVolume.GetComponent<MicrophoneInput>().loudness * 0.01f;
+            moveSpeed = micVolume.GetComponent<MicrophoneInput>().loudness * 0.2f;
             transform.position = new Vector3(transform.position.x, transform.position.y + moveSpeed, transform.position.z);
-            transform.position -= gravity;
+            //transform.position -= gravity;
         }
         if (this.tag == "blue")
         {
-            moveSpeed = micVolume.GetComponent<MicrophoneInput>().loudness * 0.2f;
+            moveSpeed = micVolume.GetComponent<MicrophoneInput>().loudness * 0.04f;
             transform.position = new Vector3(transform.position.x, transform.position.y + moveSpeed, transform.position.z);
         }
         if (this.tag == "red")
