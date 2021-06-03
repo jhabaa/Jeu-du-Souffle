@@ -127,6 +127,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   blowEffect: {fileID: 1837397885195798821}
+  score: {fileID: 1287354837264177164, guid: b84d4cfa1337cf246bf77477fea83bf1, type: 3}
 --- !u!114 &1837397885195798821
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -172,7 +173,6 @@ MonoBehaviour:
   m_followingDuration: 0.04
   m_overrideMaxAngularVelocity: 0
   m_unblockableGrab: 0
-  m_scrollingSpeed: 0.01
   m_afterGrabbed:
     m_PersistentCalls:
       m_Calls: []
@@ -182,3 +182,4 @@ MonoBehaviour:
   m_onDrop:
     m_PersistentCalls:
       m_Calls: []
+  m_scrollingSpeed: 0.01

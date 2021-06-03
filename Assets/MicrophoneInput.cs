@@ -11,19 +11,15 @@ public class MicrophoneInput : MonoBehaviour
         
     void Start()
     {
-        GetComponent<AudioSource>().clip = Microphone.Start("Microphone (High Definition Audio Device)", true, 10, 44100);
+        GetComponent<AudioSource>().clip = Microphone.Start(Microphone.devices[0], true, 10, 44100);
         GetComponent<AudioSource>().loop = true; // Set the AudioClip to loop
         //GetComponent<AudioSource>().mute = true; // Mute the sound, we don't want the player to hear it
         while (!(Microphone.GetPosition("") > 0))
         {
         } // Wait until the recording has started
         GetComponent<AudioSource>().Play(); // Play the audio source!
-        
-        foreach (var device in Microphone.devices)
-        {
 
-            Debug.Log("Le micro connecté est : "+ device);
-        }
+        Debug.Log("Vous utilisez le micro : " + Microphone.devices[0]);
     }
         
     void Update()
